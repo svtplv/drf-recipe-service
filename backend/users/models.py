@@ -29,6 +29,8 @@ class User(AbstractUser):
         'Пароль',
         max_length=settings.MAX_PASSWORD,
     )
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('username', 'first_name', 'last_name', 'password')
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -37,3 +39,36 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class Follow(models.Model):
+    user = models.ForeignKey(
+        User,
+        verbose_name='Пользователь',
+        on_delete=models.CASCADE,
+        related_name="follower"
+    )
+    author = models.ForeignKey(
+        User,
+        verbose_name='Автор',
+        on_delete=models.CASCADE,
+        related_name="followers"
+    )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.CheckConstraint(
+                name='prevent_self_follow',
+                check=~models.Q(user=models.F('author')),
+                violation_error_message='Нельзя подписаться на самого себя'
+            ),
+            models.UniqueConstraint(
+                fields=('user', 'author'),
+                name="unique_followers",
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.user} подписан на {self.author}'
