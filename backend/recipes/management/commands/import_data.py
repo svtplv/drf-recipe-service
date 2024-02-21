@@ -2,7 +2,7 @@ import json
 
 from django.core.management.base import BaseCommand
 
-from recipes.models import Ingredient
+from recipes.models import Ingredient, Tag
 
 
 class Command(BaseCommand):
@@ -18,6 +18,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         MODEL_PATH = {
             Ingredient: 'ingredients.json',
+            Tag: 'tags.json',
         }
 
         for model, file_path in MODEL_PATH.items():
