@@ -1,6 +1,7 @@
 from djoser.serializers import UserSerializer
-from rest_framework.serializers import SerializerMethodField
+from rest_framework.serializers import SerializerMethodField, ModelSerializer
 from users.models import User, Follow
+from recipes.models import Tag
 
 
 class CustomUserSerialiser(UserSerializer):
@@ -22,3 +23,9 @@ class CustomUserSerialiser(UserSerializer):
             'last_name',
             'is_subscribed'
         )
+
+
+class TagSerializer(ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ('id', 'name', 'color', 'slug')

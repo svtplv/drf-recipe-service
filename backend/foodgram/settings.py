@@ -110,9 +110,15 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
+
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 10
 }
 
 FORBIDDEN_WORDS = ['me']
 MAX_USERS_NAME = 150
 MAX_PASSWORD = 150
 MAX_EMAIL = 254
+MAX_TAG_NAME = 200
+MAX_TAG_SLUG = 200
+HEX_LEN = 7
