@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .forms import TagForm
-from .models import Tag, Ingredient
+from .models import Tag, Ingredient, Recipe, Quantity
 
 
 @admin.register(Tag)
@@ -17,3 +17,14 @@ class IngredientAdmin(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit',)
     search_fields = ('name',)
     search_help_text = 'Поиск по названию ингредиента.'
+
+
+class QuantityInline(admin.TabularInline):
+    autocomplete_fields = ('ingredient',)
+    model = Quantity
+    extra = 4
+
+
+@admin.register(Recipe)
+class RecipeAdmin(admin.ModelAdmin):
+    inlines = (QuantityInline,)
