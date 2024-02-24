@@ -6,12 +6,13 @@ from rest_framework.status import HTTP_200_OK, HTTP_204_NO_CONTENT
 from rest_framework import viewsets
 
 from users.models import User
-from recipes.models import Tag, Ingredient
+from recipes.models import Tag, Ingredient, Recipe
 from .mixins import CreateListRetrieveMixin
 from .serializers import (
     CustomUserSerialiser,
     TagSerializer,
-    IngredientSerializer
+    IngredientSerializer,
+    RecipeReadSerializer
 )
 
 
@@ -60,3 +61,8 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+
+
+class RecipeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeReadSerializer
