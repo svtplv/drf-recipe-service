@@ -131,6 +131,16 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         recipe.tags.add(*tags)
         return recipe
 
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients', None)
+        tags = validated_data.pop('tags', None)
+        if ingredients:
+            instance.ingredients.clear()
+            self.create_ingredients(ingredients, instance)
+        if tags:
+            instance.tags.set(tags)
+        return super().update(instance, validated_data)
+
     def to_representation(self, instance):
         serializer = RecipeReadSerializer(instance)
         return serializer.data
