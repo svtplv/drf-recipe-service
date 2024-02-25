@@ -1,9 +1,11 @@
 from djoser.serializers import UserCreateSerializer, SetPasswordSerializer
+from django.conf import settings
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_204_NO_CONTENT
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
 
 from users.models import User
 from recipes.models import Tag, Ingredient, Recipe
@@ -12,7 +14,8 @@ from .serializers import (
     CustomUserSerialiser,
     TagSerializer,
     IngredientSerializer,
-    RecipeReadSerializer
+    RecipeReadSerializer,
+    RecipeWriteSerializer
 )
 
 
@@ -63,6 +66,15 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
 
 
-class RecipeViewSet(viewsets.ReadOnlyModelViewSet):
+class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeReadSerializer
+    http_method_names = settings.ALLOWED_METHODS
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    def get_serializer_class(self):
+        if self.request.method in SAFE_METHODS:
+            return RecipeReadSerializer
+        return RecipeWriteSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)

@@ -28,3 +28,8 @@ class QuantityInline(admin.TabularInline):
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     inlines = (QuantityInline,)
+
+
+@admin.register(Quantity)
+class QuantityAdmin(admin.ModelAdmin):
+    pass
