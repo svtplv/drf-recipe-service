@@ -28,13 +28,56 @@ class CustomUserSerialiser(UserSerializer):
         )
 
 
+class FollowSerializer(serializers.ModelSerializer):
+    email = serializers.ReadOnlyField(source='author.email')
+    id = serializers.ReadOnlyField(source='author.id')
+    username = serializers.ReadOnlyField(source='author.username')
+    first_name = serializers.ReadOnlyField(source='author.first_name')
+    last_name = serializers.ReadOnlyField(source='author.last_name')
+    is_subscribed = serializers.ReadOnlyField(default=True)
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.ReadOnlyField(source='author.recipes.count')
+
+    class Meta:
+        model = Follow
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count',
+        )
+
+    def get_recipes(self, obj):
+        serializer = RecipeSummarySerializer(obj.author.recipes, many=True,)
+        return serializer.data
+
+    def validate(self, data):
+        user = self.context.get('user')
+        author = self.context.get('author')
+        if user == author:
+            raise serializers.ValidationError(
+                {'errors': 'Вы не можете подписаться на себя'}
+            )
+        if Follow.objects.filter(user=user, author=author).exists():
+            raise serializers.ValidationError(
+                {'errors': 'Вы уже подписаны на этого пользователя'}
+            )
+        return data
+
+
 class TagSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Tag
         fields = ('id', 'name', 'color', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
@@ -91,7 +134,13 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time'
         )
-        read_only_fields = ('tags', 'ingredients',)
+        # read_only_fields = ('tags', 'ingredients',)
+
+
+class RecipeSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
