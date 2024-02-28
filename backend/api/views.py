@@ -1,15 +1,15 @@
 from djoser.serializers import UserCreateSerializer, SetPasswordSerializer
 from django.conf import settings
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_204_NO_CONTENT
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, SAFE_METHODS
 
 from users.models import User
 from recipes.models import Tag, Ingredient, Recipe
 from .mixins import CreateListRetrieveMixin
+from .permissions import IsAuthorStaffOrReadOnly
 from .serializers import (
     CustomUserSerialiser,
     TagSerializer,
@@ -69,7 +69,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     http_method_names = settings.ALLOWED_METHODS
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthorStaffOrReadOnly,)
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:

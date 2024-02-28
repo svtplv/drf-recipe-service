@@ -129,4 +129,4 @@ MAX_INGREDIENT_UNIT = 200
 MAX_RECIPE_NAME = 200
 MIN_COOKING_TIME = 1
 MIN_INGREDIENT_AMOUNT = 1
-ALLOWED_METHODS = ('get', 'post', 'patch')
+ALLOWED_METHODS = ('get', 'post', 'patch', 'delete')
