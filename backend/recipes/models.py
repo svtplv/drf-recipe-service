@@ -116,3 +116,59 @@ class Quantity(models.Model):
             f'{self.ingredient.name} {self.amount} '
             f'{self.ingredient.measurement_unit}'
         )
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+        related_name='favorites'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
+        related_name='favorites'
+    )
+
+    class Meta:
+        verbose_name = 'Избранный рецепт'
+        verbose_name_plural = 'Избранные рецепты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name="unique_favorites",
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.user} добавил рецепт {self.recipe}'
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+        related_name='carts'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
+        related_name='carts'
+    )
+
+    class Meta:
+        verbose_name = 'Рецепт для покупки'
+        verbose_name_plural = 'Рецепты для покупки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name="unique_carts",
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.user} добавил рецепт {self.recipe}'

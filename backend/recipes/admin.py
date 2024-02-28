@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .forms import TagForm
-from .models import Tag, Ingredient, Recipe, Quantity
+from .models import Tag, Ingredient, Recipe, Quantity, Favorite, Cart
 
 
 @admin.register(Tag)
@@ -32,4 +32,14 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(Quantity)
 class QuantityAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Cart)
+class CartAdmin(admin.ModelAdmin):
     pass
