@@ -116,11 +116,13 @@ class Base64ImageField(serializers.ImageField):
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True,)
-    author = UserSerializer
+    author = CustomUserSerialiser()
     ingredients = QuantityReadSerializer(
         many=True,
         source='recipe_ingredients'
     )
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
@@ -129,12 +131,26 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'tags',
             'author',
             'ingredients',
+            'is_favorited',
+            'is_in_shopping_cart',
             'name',
             'image',
             'text',
             'cooking_time'
         )
         # read_only_fields = ('tags', 'ingredients',)
+
+    def get_is_favorited(self, obj):
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            return Favorite.objects.filter(user=user, recipe=obj).exists()
+        return False
+
+    def get_is_in_shopping_cart(self, obj):
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            return Cart.objects.filter(user=user, recipe=obj).exists()
+        return False
 
 
 class RecipeSummarySerializer(serializers.ModelSerializer):
@@ -191,8 +207,39 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
-        serializer = RecipeReadSerializer(instance)
+        serializer = RecipeReadSerializer(
+            instance,
+            context={'request': self.context.get('request')}
+        )
         return serializer.data
+
+    def validate_ingredients(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                'Нужно указать хотя бы один ингредиент'
+            )
+        ingredient_ids = [obj['ingredient']['id'] for obj in value]
+        if len(ingredient_ids) > len(set(ingredient_ids)):
+            raise serializers.ValidationError(
+                'Ингредиенты не должны повторяться'
+            )
+        for id in ingredient_ids:
+            if not Ingredient.objects.filter(id=id).exists():
+                raise serializers.ValidationError(
+                    f'Ингредиента {id} не существует'
+                )
+        return value
+
+    def validate_tags(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                'Нужно указать хотя бы один тег'
+            )
+        if len(value) > len(set(value)):
+            raise serializers.ValidationError(
+                'Теги не должны повторяться'
+            )
+        return value
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
