@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
 from users.models import User, Follow
-from recipes.models import Tag, Ingredient, Quantity, Recipe
+from recipes.models import Tag, Ingredient, Quantity, Recipe, Favorite
 
 
 class CustomUserSerialiser(UserSerializer):
@@ -193,3 +193,29 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         serializer = RecipeReadSerializer(instance)
         return serializer.data
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+
+    id = serializers.ReadOnlyField(source='recipe.id')
+    name = serializers.ReadOnlyField(source='recipe.name')
+    image = serializers.ImageField(source='recipe.image', read_only=True)
+    cooking_time = serializers.ReadOnlyField(source='recipe.cooking_time')
+
+    class Meta:
+        fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time',
+        )
+        model = Favorite
+
+    def validate(self, data):
+        user = self.context.get('user')
+        recipe = self.context.get('recipe')
+        if Favorite.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError(
+                {'errors': 'Этот рецепт уже находится в избранном'}
+            )
+        return data

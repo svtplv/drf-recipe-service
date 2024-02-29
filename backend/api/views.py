@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework import viewsets
 
 from users.models import User, Follow
-from recipes.models import Tag, Ingredient, Recipe
+from recipes.models import Tag, Ingredient, Recipe, Favorite
 from .mixins import CreateListRetrieveMixin
 from .permissions import IsAuthorStaffOrReadOnly
 from .serializers import (
@@ -17,7 +17,8 @@ from .serializers import (
     IngredientSerializer,
     RecipeReadSerializer,
     RecipeWriteSerializer,
-    FollowSerializer
+    FollowSerializer,
+    FavoriteSerializer
 )
 
 
@@ -128,3 +129,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    @action(
+        detail=True,
+        methods=('post', 'delete'),
+        permission_classes=(IsAuthenticated,),
+    )
+    def favorite(self, request, pk=None):
+        user = request.user
+        recipe = get_object_or_404(Recipe, id=pk)
+        if request.method == 'POST':
+            serializer = FavoriteSerializer(
+                data=request.data,
+                context={'user': user, 'recipe': pk})
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=user, recipe=recipe)
+            return Response(
+                serializer.data,
+                status.HTTP_201_CREATED
+            )
+        favorite = Favorite.objects.filter(user=user, recipe=recipe).first()
+        if not favorite:
+            return Response(
+                {'errors': 'Вы не добавляли этот рецепт в избранное'},
+                status.HTTP_400_BAD_REQUEST
+            )
+        favorite.delete()
+        return Response(
+            'Рецепт успешно удален из избранного',
+            status.HTTP_204_NO_CONTENT
+        )
