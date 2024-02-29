@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
 from users.models import User, Follow
-from recipes.models import Tag, Ingredient, Quantity, Recipe, Favorite
+from recipes.models import Tag, Ingredient, Quantity, Recipe, Favorite, Cart
 
 
 class CustomUserSerialiser(UserSerializer):
@@ -196,7 +196,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
-
     id = serializers.ReadOnlyField(source='recipe.id')
     name = serializers.ReadOnlyField(source='recipe.name')
     image = serializers.ImageField(source='recipe.image', read_only=True)
@@ -218,8 +217,15 @@ class FavoriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {'errors': 'Данного рецепта не существует'}
             )
-        if Favorite.objects.filter(user=user, recipe=recipe_id).exists():
+        if self.Meta.model.objects.filter(
+            user=user, recipe=recipe_id
+        ).exists():
             raise serializers.ValidationError(
-                {'errors': 'Этот рецепт уже находится в избранном'}
+                {'errors': 'Вы уже добавляли этот рецепт'}
             )
         return data
+
+
+class CartSerializer(FavoriteSerializer):
+    class Meta(FavoriteSerializer.Meta):
+        model = Cart

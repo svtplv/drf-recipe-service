@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework import viewsets
 
 from users.models import User, Follow
-from recipes.models import Tag, Ingredient, Recipe, Favorite
+from recipes.models import Tag, Ingredient, Recipe, Favorite, Cart
 from .mixins import CreateListRetrieveMixin
 from .permissions import IsAuthorStaffOrReadOnly
 from .serializers import (
@@ -18,7 +18,8 @@ from .serializers import (
     RecipeReadSerializer,
     RecipeWriteSerializer,
     FollowSerializer,
-    FavoriteSerializer
+    FavoriteSerializer,
+    CartSerializer
 )
 
 
@@ -158,5 +159,36 @@ class RecipeViewSet(viewsets.ModelViewSet):
         favorite.delete()
         return Response(
             'Рецепт успешно удален из избранного',
+            status.HTTP_204_NO_CONTENT
+        )
+
+    @action(
+        detail=True,
+        methods=('post', 'delete'),
+        permission_classes=(IsAuthenticated,),
+    )
+    def shopping_cart(self, request, pk=None):
+        user = request.user
+        if request.method == 'POST':
+            serializer = CartSerializer(
+                data=request.data,
+                context={'user': user, 'pk': pk})
+            serializer.is_valid(raise_exception=True)
+            recipe = Recipe.objects.get(pk=pk)
+            serializer.save(user=user, recipe=recipe)
+            return Response(
+                serializer.data,
+                status.HTTP_201_CREATED
+            )
+        recipe = get_object_or_404(Recipe, pk=pk)
+        cart_item = Cart.objects.filter(user=user, recipe=recipe).first()
+        if not cart_item:
+            return Response(
+                {'errors': 'Вы не добавляли этот рецепт в список покупок'},
+                status.HTTP_400_BAD_REQUEST
+            )
+        cart_item.delete()
+        return Response(
+            'Рецепт успешно удален из списка покупок',
             status.HTTP_204_NO_CONTENT
         )
