@@ -137,17 +137,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk=None):
         user = request.user
-        recipe = get_object_or_404(Recipe, id=pk)
         if request.method == 'POST':
             serializer = FavoriteSerializer(
                 data=request.data,
-                context={'user': user, 'recipe': pk})
+                context={'user': user, 'pk': pk})
             serializer.is_valid(raise_exception=True)
+            recipe = Recipe.objects.get(pk=pk)
             serializer.save(user=user, recipe=recipe)
             return Response(
                 serializer.data,
                 status.HTTP_201_CREATED
             )
+        recipe = get_object_or_404(Recipe, pk=pk)
         favorite = Favorite.objects.filter(user=user, recipe=recipe).first()
         if not favorite:
             return Response(
