@@ -52,11 +52,16 @@ class FollowSerializer(serializers.ModelSerializer):
         )
 
     def get_recipes(self, obj):
-        serializer = RecipeSummarySerializer(obj.author.recipes, many=True,)
+        request = self.context.get('request')
+        limit = request.query_params.get('recipes_limit')
+        recipes = obj.author.recipes.all()
+        if limit:
+            recipes = recipes[:int(limit)]
+        serializer = RecipeSummarySerializer(recipes, many=True,)
         return serializer.data
 
     def validate(self, data):
-        user = self.context.get('user')
+        user = self.context.get('request').user
         author = self.context.get('author')
         if user == author:
             raise serializers.ValidationError(

@@ -89,7 +89,7 @@ class UserViewSet(CreateListRetrieveMixin):
         if request.method == 'POST':
             serializer = FollowSerializer(
                 data=request.data,
-                context={'user': user, 'author': author})
+                context={'request': request, 'author': author})
             serializer.is_valid(raise_exception=True)
             serializer.save(user=user, author=author)
             return Response(
