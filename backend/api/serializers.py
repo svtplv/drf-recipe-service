@@ -143,7 +143,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time'
         )
-        # read_only_fields = ('tags', 'ingredients',)
 
     def get_is_favorited(self, obj):
         user = self.context.get('request').user
@@ -202,13 +201,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        ingredients = validated_data.pop('ingredients', None)
-        tags = validated_data.pop('tags', None)
-        if ingredients:
-            instance.ingredients.clear()
-            self.create_ingredients(ingredients, instance)
-        if tags:
-            instance.tags.set(tags)
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        instance.ingredients.clear()
+        self.create_ingredients(ingredients, instance)
+        instance.tags.set(tags)
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
@@ -245,6 +242,15 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 'Теги не должны повторяться'
             )
         return value
+
+    def validate(self, data):
+        errors = {
+            field: 'Обязательное поле' for field in
+            ('ingredients', 'tags') if field not in data
+        }
+        if errors:
+            raise serializers.ValidationError(errors)
+        return data
 
 
 class FavoriteSerializer(serializers.ModelSerializer):

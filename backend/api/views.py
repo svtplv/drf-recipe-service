@@ -1,6 +1,8 @@
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import UserCreateSerializer, SetPasswordSerializer
+from django.db.models import Sum
 from django.conf import settings
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
@@ -10,7 +12,7 @@ from rest_framework import viewsets
 
 
 from users.models import User, Follow
-from recipes.models import Tag, Ingredient, Recipe, Favorite, Cart
+from recipes.models import Tag, Ingredient, Recipe, Favorite, Cart, Quantity
 from .filters import RecipeFilter, IngredientFilter
 from .mixins import CreateListRetrieveMixin
 from .permissions import IsAuthorStaffOrReadOnly
@@ -199,3 +201,29 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'Рецепт успешно удален из списка покупок',
             status.HTTP_204_NO_CONTENT
         )
+
+    @action(
+        detail=False,
+        methods=('get',),
+        permission_classes=(IsAuthenticated,),
+    )
+    def download_shopping_cart(self, request):
+        user = request.user
+        ingredients = Quantity.objects.filter(recipe__carts__user=user)
+        annotated_ingredients = ingredients.values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(total=Sum('amount'))
+        shopping_list = ''
+        for ingredient in annotated_ingredients:
+            name = ingredient['ingredient__name']
+            unit = ingredient['ingredient__measurement_unit']
+            total = ingredient['total']
+            shopping_list += f'{name}\t{total} {unit}\n'
+        response = HttpResponse(
+            shopping_list,
+            content_type='text/plain; charset=UTF-8'
+        )
+        response['Content-Disposition'] = ('attachment; filename=list.txt')
+
+        return response

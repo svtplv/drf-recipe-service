@@ -33,13 +33,11 @@ class IngredientFilter(filters.FilterSet):
 
     def filter_name(self, queryset, name, value):
         if value:
-            startswith_queryset = queryset.filter(
-                name__istartswith=value
-            ).annotate(custom_order=Value(1))
-            contains_queryset = queryset.filter(
-                name__icontains=value
-            ).exclude(name__istartswith=value).annotate(custom_order=Value(2))
-            return startswith_queryset.union(contains_queryset).order_by(
-                'custom_order'
+            starts_qs = queryset.filter(name__istartswith=value).annotate(
+                priority=Value(1)
             )
+            contains_qs = queryset.filter(name__icontains=value).exclude(
+                name__istartswith=value
+            ).annotate(priority=Value(2))
+            return starts_qs.union(contains_qs).order_by('priority', 'name')
         return queryset
