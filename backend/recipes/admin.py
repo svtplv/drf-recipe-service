@@ -16,6 +16,7 @@ class TagAdmin(admin.ModelAdmin):
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit',)
     search_fields = ('name',)
+    list_filter = ('measurement_unit',)
     search_help_text = 'Поиск по названию ингредиента.'
 
 

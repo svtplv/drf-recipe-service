@@ -14,13 +14,12 @@ class Tag(models.Model):
     color = models.CharField(
         'Цвет в HEX',
         max_length=settings.HEX_LEN,
-        null=True
+        unique=True,
     )
     slug = models.SlugField(
         'Уникальный слаг',
         max_length=settings.MAX_TAG_SLUG,
         unique=True,
-        null=True
     )
 
     class Meta:
