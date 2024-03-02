@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .forms import TagForm
-from .models import Tag, Ingredient, Recipe, Quantity, Favorite, Cart
+from .models import Cart, Favorite, Ingredient, Quantity, Recipe, Tag
 
 
 @admin.register(Tag)

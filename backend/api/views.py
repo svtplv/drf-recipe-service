@@ -1,31 +1,23 @@
+from django.conf import settings
+from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from djoser.serializers import UserCreateSerializer, SetPasswordSerializer
-from django.db.models import Sum
-from django.conf import settings
+from djoser.serializers import SetPasswordSerializer, UserCreateSerializer
+from recipes.models import Cart, Favorite, Ingredient, Quantity, Recipe, Tag
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework import viewsets
 
-
-from users.models import User, Follow
-from recipes.models import Tag, Ingredient, Recipe, Favorite, Cart, Quantity
-from .filters import RecipeFilter, IngredientFilter
+from users.models import Follow, User
+from .filters import IngredientFilter, RecipeFilter
 from .mixins import CreateListRetrieveMixin
 from .permissions import IsAuthorStaffOrReadOnly
-from .serializers import (
-    CustomUserSerialiser,
-    TagSerializer,
-    IngredientSerializer,
-    RecipeReadSerializer,
-    RecipeWriteSerializer,
-    FollowSerializer,
-    FavoriteSerializer,
-    CartSerializer
-)
+from .serializers import (CartSerializer, CustomUserSerialiser,
+                          FavoriteSerializer, FollowSerializer,
+                          IngredientSerializer, RecipeReadSerializer,
+                          RecipeWriteSerializer, TagSerializer)
 
 
 class UserViewSet(CreateListRetrieveMixin):

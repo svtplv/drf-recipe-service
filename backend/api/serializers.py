@@ -3,8 +3,9 @@ import base64
 from django.core.files.base import ContentFile
 from djoser.serializers import UserSerializer
 from rest_framework import serializers
-from users.models import User, Follow
-from recipes.models import Tag, Ingredient, Quantity, Recipe, Favorite, Cart
+
+from recipes.models import Cart, Favorite, Ingredient, Quantity, Recipe, Tag
+from users.models import Follow, User
 
 
 class CustomUserSerialiser(UserSerializer):
