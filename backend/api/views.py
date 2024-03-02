@@ -4,12 +4,12 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import SetPasswordSerializer, UserCreateSerializer
-from recipes.models import Cart, Favorite, Ingredient, Quantity, Recipe, Tag
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 
+from recipes.models import Cart, Favorite, Ingredient, Quantity, Recipe, Tag
 from users.models import Follow, User
 from .filters import IngredientFilter, RecipeFilter
 from .mixins import CreateListRetrieveMixin
@@ -132,34 +132,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(
-        detail=True,
-        methods=('post', 'delete'),
-        permission_classes=(IsAuthenticated,),
-    )
-    def favorite(self, request, pk=None):
-        user = request.user
-        if request.method == 'POST':
-            serializer = FavoriteSerializer(
-                data=request.data,
-                context={'user': user, 'pk': pk})
-            serializer.is_valid(raise_exception=True)
-            recipe = Recipe.objects.get(pk=pk)
-            serializer.save(user=user, recipe=recipe)
-            return Response(
-                serializer.data,
-                status.HTTP_201_CREATED
-            )
+    @staticmethod
+    def post_common_logic(request, model_serializer, pk):
+        """Функция для общей POST логики избранного и списка покупок."""
+        serializer = model_serializer(
+            data=request.data,
+            context={'user': request.user, 'pk': pk})
+        serializer.is_valid(raise_exception=True)
+        recipe = Recipe.objects.get(pk=pk)
+        serializer.save(user=request.user, recipe=recipe)
+        return Response(
+            serializer.data,
+            status.HTTP_201_CREATED
+        )
+
+    @staticmethod
+    def delete_common_logic(user, model, pk):
+        """Функция для общей DELETE логики избранного и списка покупок."""
         recipe = get_object_or_404(Recipe, pk=pk)
-        favorite = Favorite.objects.filter(user=user, recipe=recipe).first()
-        if not favorite:
+        obj = model.objects.filter(user=user, recipe=recipe).first()
+        if not obj:
             return Response(
-                {'errors': 'Вы не добавляли этот рецепт в избранное'},
+                {'errors': 'Вы не добавляли этот рецепт'},
                 status.HTTP_400_BAD_REQUEST
             )
-        favorite.delete()
+        obj.delete()
         return Response(
-            'Рецепт успешно удален из избранного',
+            'Рецепт успешно удален из списка',
             status.HTTP_204_NO_CONTENT
         )
 
@@ -168,31 +167,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
         methods=('post', 'delete'),
         permission_classes=(IsAuthenticated,),
     )
-    def shopping_cart(self, request, pk=None):
-        user = request.user
+    def favorite(self, request, pk=None):
         if request.method == 'POST':
-            serializer = CartSerializer(
-                data=request.data,
-                context={'user': user, 'pk': pk})
-            serializer.is_valid(raise_exception=True)
-            recipe = Recipe.objects.get(pk=pk)
-            serializer.save(user=user, recipe=recipe)
-            return Response(
-                serializer.data,
-                status.HTTP_201_CREATED
-            )
-        recipe = get_object_or_404(Recipe, pk=pk)
-        cart_item = Cart.objects.filter(user=user, recipe=recipe).first()
-        if not cart_item:
-            return Response(
-                {'errors': 'Вы не добавляли этот рецепт в список покупок'},
-                status.HTTP_400_BAD_REQUEST
-            )
-        cart_item.delete()
-        return Response(
-            'Рецепт успешно удален из списка покупок',
-            status.HTTP_204_NO_CONTENT
-        )
+            return self.post_common_logic(request, FavoriteSerializer, pk)
+        return self.delete_common_logic(request.user, Favorite, pk)
+
+    @action(
+        detail=True,
+        methods=('post', 'delete'),
+        permission_classes=(IsAuthenticated,),
+    )
+    def shopping_cart(self, request, pk=None):
+        if request.method == 'POST':
+            return self.post_common_logic(request, CartSerializer, pk)
+        return self.delete_common_logic(request.user, Cart, pk)
 
     @action(
         detail=False,
@@ -217,5 +205,4 @@ class RecipeViewSet(viewsets.ModelViewSet):
             content_type='text/plain; charset=UTF-8'
         )
         response['Content-Disposition'] = ('attachment; filename=list.txt')
-
         return response
