@@ -15,8 +15,8 @@ class TagAdmin(admin.ModelAdmin):
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit',)
-    search_fields = ('name',)
     list_filter = ('measurement_unit',)
+    search_fields = ('name',)
     search_help_text = 'Поиск по названию ингредиента.'
 
 
@@ -28,19 +28,31 @@ class QuantityInline(admin.TabularInline):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    autocomplete_fields = ('author',)
     inlines = (QuantityInline,)
+    list_display = ('name', 'author')
+    search_fields = ('name', 'author')
+    search_help_text = 'Поиск по названию или автору рецепта.'
+    list_filter = ('tags',)
+    readonly_fields = ('favorites_count',)
 
+    def favorites_count(self, obj):
+        return obj.favorites.count()
 
-@admin.register(Quantity)
-class QuantityAdmin(admin.ModelAdmin):
-    pass
+    favorites_count.short_description = 'Количество лайков'
 
 
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('recipe', 'user')
+    autocomplete_fields = ('recipe', 'user')
+    search_fields = ('user__username',)
+    search_help_text = 'Поиск по пользователю.'
 
 
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('recipe', 'user')
+    autocomplete_fields = ('recipe', 'user')
+    search_fields = ('user__username',)
+    search_help_text = 'Поиск по пользователю.'
