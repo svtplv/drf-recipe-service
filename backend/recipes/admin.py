@@ -34,12 +34,19 @@ class RecipeAdmin(admin.ModelAdmin):
     search_fields = ('name', 'author')
     search_help_text = 'Поиск по названию или автору рецепта.'
     list_filter = ('tags',)
-    readonly_fields = ('favorites_count',)
+
+    def change_view(self, request, object_id, extra_context=None):
+        self.readonly_fields = ['favorites_count']
+        return super().change_view(request, object_id)
+
+    def add_view(self, request, extra_context=None):
+        self.readonly_fields = []
+        return super().add_view(request)
 
     def favorites_count(self, obj):
         return obj.favorites.count()
 
-    favorites_count.short_description = 'Количество лайков'
+    favorites_count.short_description = 'Количество добавлений в избранное'
 
 
 @admin.register(Favorite)
