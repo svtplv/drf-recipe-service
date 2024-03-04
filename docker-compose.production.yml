@@ -22,16 +22,13 @@ services:
   frontend:
     image: svtp/foodgram_frontend
     volumes:
-      - ../frontend/:/app/result_build/
-  nginx:
-    image: nginx:1.25.4
+      - static:/frontend_static
+  gateway:
+    image: svtp/foodgram_gateway
     ports:
       - 9000:80
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - ../frontend/build:/usr/share/nginx/html/
-      - ../docs/:/usr/share/nginx/html/api/docs/
-      - static:/var/html/backend_static/
+      - static:/static
       - media:/media
     depends_on:
       - backend

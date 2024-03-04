@@ -24,7 +24,7 @@ services:
     command: cp -r /app/build/. /frontend_static/
     volumes:
       - static:/frontend_static
-  nginx:
+  gateway:
     build: ./infra/
     ports:
       - 9000:80
