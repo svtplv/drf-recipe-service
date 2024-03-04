@@ -21,8 +21,9 @@ services:
       - media:/media
   frontend:
     build: ./frontend/
+    command: cp -r /app/build/. /frontend_static/
     volumes:
-      - ./frontend/:/app/result_build/
+      - static:/frontend_static
   nginx:
     build: ./infra/
     ports:
@@ -30,7 +31,7 @@ services:
     volumes:
       - ./frontend/build:/usr/share/nginx/html/
       - ./docs/:/usr/share/nginx/html/api/docs/
-      - static:/var/html/backend_static/
+      - static:/static
       - media:/media
     depends_on:
       - backend
