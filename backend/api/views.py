@@ -14,7 +14,7 @@ from users.models import Follow, User
 from .filters import IngredientFilter, RecipeFilter
 from .mixins import CreateListRetrieveMixin
 from .permissions import IsAuthorStaffOrReadOnly
-from .serializers import (CartSerializer, CustomUserSerialiser,
+from .serializers import (CartSerializer, UserSerialiser,
                           FavoriteSerializer, FollowSerializer,
                           IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, TagSerializer)
@@ -22,12 +22,12 @@ from .serializers import (CartSerializer, CustomUserSerialiser,
 
 class UserViewSet(CreateListRetrieveMixin):
     queryset = User.objects.all()
-    serializer_class = CustomUserSerialiser
+    serializer_class = UserSerialiser
 
     def get_serializer_class(self):
         if self.action == 'create':
             return UserCreateSerializer
-        return CustomUserSerialiser
+        return UserSerialiser
 
     @action(
         detail=False,

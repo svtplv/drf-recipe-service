@@ -1,21 +1,14 @@
 import base64
 
 from django.core.files.base import ContentFile
-from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
 from recipes.models import Cart, Favorite, Ingredient, Quantity, Recipe, Tag
 from users.models import Follow, User
 
 
-class CustomUserSerialiser(UserSerializer):
+class UserSerialiser(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
-
-    def get_is_subscribed(self, obj):
-        user = self.context.get('request').user
-        if user.is_authenticated:
-            return Follow.objects.filter(user=user, author=obj).exists()
-        return False
 
     class Meta:
         model = User
@@ -26,6 +19,14 @@ class CustomUserSerialiser(UserSerializer):
             'first_name',
             'last_name',
             'is_subscribed'
+        )
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        print()
+        return bool(
+            request and request.user.is_authenticated
+            and Follow.objects.filter(user=request.user, author=obj).exists()
         )
 
 
@@ -122,7 +123,7 @@ class Base64ImageField(serializers.ImageField):
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True,)
-    author = CustomUserSerialiser()
+    author = UserSerialiser()
     ingredients = QuantityReadSerializer(
         many=True,
         source='recipe_ingredients'
@@ -146,16 +147,18 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         )
 
     def get_is_favorited(self, obj):
-        user = self.context.get('request').user
-        if user.is_authenticated:
-            return Favorite.objects.filter(user=user, recipe=obj).exists()
-        return False
+        request = self.context.get('request')
+        return bool(
+            request and request.user.is_authenticated
+            and Favorite.objects.filter(user=request.user, recipe=obj).exists()
+        )
 
     def get_is_in_shopping_cart(self, obj):
-        user = self.context.get('request').user
-        if user.is_authenticated:
-            return Cart.objects.filter(user=user, recipe=obj).exists()
-        return False
+        request = self.context.get('request')
+        return bool(
+            request and request.user.is_authenticated
+            and Cart.objects.filter(user=request.user, recipe=obj).exists()
+        )
 
 
 class RecipeSummarySerializer(serializers.ModelSerializer):
