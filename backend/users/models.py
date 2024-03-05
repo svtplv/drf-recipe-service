@@ -1,36 +1,35 @@
-from django.conf import settings
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from .validators import validate_username
+from foodgram import constants
 
 
 class User(AbstractUser):
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('username', 'first_name', 'last_name', 'password')
     email = models.EmailField(
         'Почта',
-        max_length=settings.MAX_EMAIL,
         unique=True,
     )
     username = models.CharField(
         'Имя пользователя',
-        max_length=settings.MAX_USERS_NAME,
+        max_length=constants.MAX_USERS_NAME,
         unique=True,
-        validators=(validate_username,)
+        validators=(UnicodeUsernameValidator(),)
     )
     first_name = models.CharField(
         'Имя',
-        max_length=settings.MAX_USERS_NAME,
+        max_length=constants.MAX_USERS_NAME,
     )
     last_name = models.CharField(
         'Фамилия',
-        max_length=settings.MAX_USERS_NAME,
+        max_length=constants.MAX_USERS_NAME,
     )
     password = models.CharField(
         'Пароль',
-        max_length=settings.MAX_PASSWORD,
+        max_length=constants.MAX_PASSWORD,
     )
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ('username', 'first_name', 'last_name', 'password')
 
     class Meta:
         verbose_name = 'Пользователь'

@@ -1,23 +1,24 @@
-from django.conf import settings
-from django.core.validators import MinValueValidator
+from colorfield.fields import ColorField
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+
+from foodgram import constants
 from users.models import User
 
 
 class Tag(models.Model):
     name = models.CharField(
         'Название',
-        max_length=settings.MAX_TAG_NAME,
+        max_length=constants.MAX_TAG_NAME,
         unique=True,
     )
-    color = models.CharField(
+    color = ColorField(
         'Цвет в HEX',
-        max_length=settings.HEX_LEN,
         unique=True,
     )
     slug = models.SlugField(
         'Уникальный слаг',
-        max_length=settings.MAX_TAG_SLUG,
+        max_length=constants.MAX_TAG_SLUG,
         unique=True,
     )
 
@@ -32,17 +33,23 @@ class Tag(models.Model):
 class Ingredient(models.Model):
     name = models.CharField(
         'Ингредиент',
-        max_length=settings.MAX_INGREDIENT_NAME,
+        max_length=constants.MAX_INGREDIENT_NAME,
         db_index=True,
     )
     measurement_unit = models.CharField(
         'Единица измерения',
-        max_length=settings.MAX_INGREDIENT_UNIT,
+        max_length=constants.MAX_INGREDIENT_UNIT,
     )
 
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('name', 'measurement_unit'),
+                name="unique_ingredients",
+            )
+        ]
 
     def __str__(self):
         return f'{self.name} ({self.measurement_unit})'
@@ -51,7 +58,7 @@ class Ingredient(models.Model):
 class Recipe(models.Model):
     name = models.CharField(
         'Название',
-        max_length=settings.MAX_RECIPE_NAME,
+        max_length=constants.MAX_RECIPE_NAME,
     )
     author = models.ForeignKey(
         User,
@@ -77,7 +84,10 @@ class Recipe(models.Model):
     text = models.TextField('Описание',)
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления',
-        validators=(MinValueValidator(settings.MIN_COOKING_TIME),)
+        validators=(
+            MinValueValidator(constants.MIN_COOKING_TIME),
+            MaxValueValidator(constants.MAX_COOKING_TIME)
+        )
     )
     pub_date = models.DateTimeField('Время публикации', auto_now_add=True)
 
@@ -105,7 +115,10 @@ class Quantity(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         'Количество',
-        validators=(MinValueValidator(settings.MIN_INGREDIENT_AMOUNT),)
+        validators=(
+            MinValueValidator(constants.MIN_INGREDIENT_AMOUNT),
+            MaxValueValidator(constants.MAX_INGREDIENT_AMOUNT)
+        )
     )
 
     class Meta:

@@ -2,10 +2,10 @@ import os
 from pathlib import Path
 
 from django.core.management.utils import get_random_secret_key
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 
-load_dotenv()
+# load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_filters',
     'djoser',
+    'colorfield',
 ]
 
 MIDDLEWARE = [
@@ -122,17 +123,3 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10
 }
-
-FORBIDDEN_WORDS = ('me',)
-MAX_USERS_NAME = 150
-MAX_PASSWORD = 150
-MAX_EMAIL = 254
-MAX_TAG_NAME = 200
-MAX_TAG_SLUG = 200
-HEX_LEN = 7
-MAX_INGREDIENT_NAME = 200
-MAX_INGREDIENT_UNIT = 200
-MAX_RECIPE_NAME = 200
-MIN_COOKING_TIME = 1
-MIN_INGREDIENT_AMOUNT = 1
-ALLOWED_METHODS = ('get', 'post', 'patch', 'delete')

@@ -1,12 +1,10 @@
 from django.contrib import admin
 
-from .forms import TagForm
 from .models import Cart, Favorite, Ingredient, Quantity, Recipe, Tag
 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    form = TagForm
     list_display = ('name', 'color', 'slug',)
     search_fields = ('name', 'color')
     search_help_text = 'Поиск по названию тега или его слагу.'
@@ -24,6 +22,7 @@ class QuantityInline(admin.TabularInline):
     autocomplete_fields = ('ingredient',)
     model = Quantity
     extra = 4
+    min_num = 1
 
 
 @admin.register(Recipe)

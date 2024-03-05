@@ -103,7 +103,8 @@ class QuantityReadSerializer(serializers.ModelSerializer):
 
 
 class QuantityWriteSerialier(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='ingredient.id')
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+
     amount = serializers.IntegerField(min_value=1)
 
     class Meta:
@@ -186,15 +187,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
 
-    def create_ingredients(self, ingredient_data, recipe):
-        for obj in ingredient_data:
-            amount = obj['amount']
-            ingredient = Ingredient.objects.get(id=obj['ingredient']['id'])
-            Quantity.objects.create(
-                ingredient=ingredient,
-                recipe=recipe,
-                amount=amount
-            )
+    @staticmethod
+    def create_ingredients(ingredient_data, recipe):
+        objects = [Quantity(
+            ingredient=obj['id'],
+            amount=obj['amount'],
+            recipe=recipe,
+        ) for obj in ingredient_data]
+        Quantity.objects.bulk_create(objects)
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
@@ -224,16 +224,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Нужно указать хотя бы один ингредиент'
             )
-        ingredient_ids = [obj['ingredient']['id'] for obj in value]
+        ingredient_ids = [obj['id'] for obj in value]
         if len(ingredient_ids) > len(set(ingredient_ids)):
             raise serializers.ValidationError(
                 'Ингредиенты не должны повторяться'
             )
-        for id in ingredient_ids:
-            if not Ingredient.objects.filter(id=id).exists():
-                raise serializers.ValidationError(
-                    f'Ингредиента {id} не существует'
-                )
         return value
 
     def validate_tags(self, value):
@@ -286,6 +281,13 @@ class FavoriteSerializer(serializers.ModelSerializer):
                 {'errors': 'Вы уже добавляли этот рецепт'}
             )
         return data
+
+    # def to_representation(self, instance):
+    #     serializer = RecipeSummarySerializer(
+    #         instance.recipe,
+    #         context={'request': self.context.get('request')}
+    #     )
+    #     return serializer.data
 
 
 class CartSerializer(FavoriteSerializer):
