@@ -23,7 +23,6 @@ class UserSerialiser(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        print()
         return bool(
             request and request.user.is_authenticated
             and Follow.objects.filter(user=request.user, author=obj).exists()
@@ -99,8 +98,6 @@ class QuantityReadSerializer(serializers.ModelSerializer):
 
 class QuantityWriteSerialier(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
-
-    amount = serializers.IntegerField(min_value=1)
 
     class Meta:
         model = Quantity
