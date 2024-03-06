@@ -30,50 +30,45 @@ class UserSerialiser(serializers.ModelSerializer):
         )
 
 
-class FollowSerializer(serializers.ModelSerializer):
-    email = serializers.ReadOnlyField(source='author.email')
-    id = serializers.ReadOnlyField(source='author.id')
-    username = serializers.ReadOnlyField(source='author.username')
-    first_name = serializers.ReadOnlyField(source='author.first_name')
-    last_name = serializers.ReadOnlyField(source='author.last_name')
-    is_subscribed = serializers.ReadOnlyField(default=True)
+class AuthorReadSerializer(UserSerialiser):
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.ReadOnlyField(source='author.recipes.count')
+    recipes_count = serializers.ReadOnlyField(source='recipes.count')
 
-    class Meta:
-        model = Follow
-        fields = (
-            'email',
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            'is_subscribed',
-            'recipes',
-            'recipes_count',
-        )
+    class Meta(UserSerialiser.Meta):
+        fields = UserSerialiser.Meta.fields + ('recipes', 'recipes_count')
 
     def get_recipes(self, obj):
         request = self.context.get('request')
         limit = request.query_params.get('recipes_limit')
-        recipes = obj.author.recipes.all()
-        if limit:
+        recipes = obj.recipes.all()
+        if limit and limit.isdigit():
             recipes = recipes[:int(limit)]
         serializer = RecipeSummarySerializer(recipes, many=True,)
         return serializer.data
 
+
+class FollowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follow
+        fields = ('user', 'author')
+
     def validate(self, data):
-        user = self.context.get('request').user
-        author = self.context.get('author')
-        if user == author:
+        if data['user'] == data['author']:
             raise serializers.ValidationError(
                 {'errors': 'Вы не можете подписаться на себя'}
             )
-        if Follow.objects.filter(user=user, author=author).exists():
+        if Follow.objects.filter(**data).exists():
             raise serializers.ValidationError(
                 {'errors': 'Вы уже подписаны на этого пользователя'}
             )
         return data
+
+    def to_representation(self, instance):
+        serializer = AuthorReadSerializer(
+            instance.author,
+            context={'request': self.context.get('request')}
+        )
+        return serializer.data
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -253,41 +248,23 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='recipe.id')
-    name = serializers.ReadOnlyField(source='recipe.name')
-    image = serializers.ImageField(source='recipe.image', read_only=True)
-    cooking_time = serializers.ReadOnlyField(source='recipe.cooking_time')
-
     class Meta:
-        fields = (
-            'id',
-            'name',
-            'image',
-            'cooking_time',
-        )
+        fields = ('user', 'recipe')
         model = Favorite
 
     def validate(self, data):
-        user = self.context.get('user')
-        recipe_id = self.context.get('pk')
-        if not Recipe.objects.filter(id=recipe_id).exists():
-            raise serializers.ValidationError(
-                {'errors': 'Данного рецепта не существует'}
-            )
-        if self.Meta.model.objects.filter(
-            user=user, recipe=recipe_id
-        ).exists():
+        if self.Meta.model.objects.filter(**data).exists():
             raise serializers.ValidationError(
                 {'errors': 'Вы уже добавляли этот рецепт'}
             )
         return data
 
-    # def to_representation(self, instance):
-    #     serializer = RecipeSummarySerializer(
-    #         instance.recipe,
-    #         context={'request': self.context.get('request')}
-    #     )
-    #     return serializer.data
+    def to_representation(self, instance):
+        serializer = RecipeSummarySerializer(
+            instance.recipe,
+            context={'request': self.context.get('request')}
+        )
+        return serializer.data
 
 
 class CartSerializer(FavoriteSerializer):

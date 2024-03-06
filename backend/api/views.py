@@ -74,29 +74,35 @@ class UserViewSet(CreateListRetrieveMixin):
 
     @action(
         detail=True,
-        methods=('post', 'delete'),
+        methods=('post',),
         permission_classes=(IsAuthenticated,),
     )
     def subscribe(self, request, pk=None):
-        user = request.user
-        author = get_object_or_404(User, id=pk)
-        if request.method == 'POST':
-            serializer = FollowSerializer(
-                data=request.data,
-                context={'request': request, 'author': author})
-            serializer.is_valid(raise_exception=True)
-            serializer.save(user=user, author=author)
-            return Response(
-                serializer.data,
-                status.HTTP_201_CREATED
-            )
-        subscription = Follow.objects.filter(user=user, author=author).first()
+        get_object_or_404(User, pk=pk)
+        data = {'user': request.user.id, 'author': pk}
+        serializer = FollowSerializer(
+            data=data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            serializer.data,
+            status.HTTP_201_CREATED
+        )
+
+    @subscribe.mapping.delete
+    def subscribe_delete(self, request, pk=None):
+        author = get_object_or_404(User, pk=pk)
+        subscription, _ = Follow.objects.filter(
+            user=request.user,
+            author=author
+        ).delete()
         if not subscription:
             return Response(
                 {'errors': 'Вы не подписаны на этого пользователя'},
                 status.HTTP_400_BAD_REQUEST
             )
-        subscription.delete()
         return Response(
             'Успешная отписка',
             status.HTTP_204_NO_CONTENT
@@ -135,12 +141,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @staticmethod
     def post_common_logic(request, model_serializer, pk):
         """Функция для общей POST логики избранного и списка покупок."""
-        serializer = model_serializer(
-            data=request.data,
-            context={'user': request.user, 'pk': pk})
+        data = {'user': request.user.id, 'recipe': pk}
+        serializer = model_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        recipe = Recipe.objects.get(pk=pk)
-        serializer.save(user=request.user, recipe=recipe)
+        serializer.save()
         return Response(
             serializer.data,
             status.HTTP_201_CREATED
@@ -150,13 +154,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def delete_common_logic(user, model, pk):
         """Функция для общей DELETE логики избранного и списка покупок."""
         recipe = get_object_or_404(Recipe, pk=pk)
-        obj = model.objects.filter(user=user, recipe=recipe).first()
+        obj, _ = model.objects.filter(user=user, recipe=recipe).delete()
         if not obj:
             return Response(
                 {'errors': 'Вы не добавляли этот рецепт'},
                 status.HTTP_400_BAD_REQUEST
             )
-        obj.delete()
         return Response(
             'Рецепт успешно удален из списка',
             status.HTTP_204_NO_CONTENT
@@ -164,22 +167,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=('post', 'delete'),
+        methods=('post',),
         permission_classes=(IsAuthenticated,),
     )
     def favorite(self, request, pk=None):
-        if request.method == 'POST':
-            return self.post_common_logic(request, FavoriteSerializer, pk)
+        return self.post_common_logic(request, FavoriteSerializer, pk)
+
+    @favorite.mapping.delete
+    def favorite_delete(self, request, pk=None):
         return self.delete_common_logic(request.user, Favorite, pk)
 
     @action(
         detail=True,
-        methods=('post', 'delete'),
+        methods=('post',),
         permission_classes=(IsAuthenticated,),
     )
     def shopping_cart(self, request, pk=None):
-        if request.method == 'POST':
-            return self.post_common_logic(request, CartSerializer, pk)
+        return self.post_common_logic(request, CartSerializer, pk)
+
+    @shopping_cart.mapping.delete
+    def shopping_cart_delete(self, request, pk=None):
         return self.delete_common_logic(request.user, Cart, pk)
 
     @action(
