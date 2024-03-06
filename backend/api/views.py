@@ -135,9 +135,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
     @staticmethod
     def post_common_logic(request, model_serializer, pk):
         """Функция для общей POST логики избранного и списка покупок."""
