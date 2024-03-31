@@ -1,7 +1,7 @@
-# Foodgram
+# drf-recipe-service 
 ## Описание:
 
-«Фудграм» — сайт, на котором пользователи могут публиковать рецепты, добавлять чужие рецепты в избранное и подписываться на публикации других авторов. Пользователям сайта также доступен сервис «Список покупок». Он позволит создавать список продуктов, которые нужно купить для приготовления выбранных блюд.
+Данное приложение представляет собой сайт, на котором пользователи могут публиковать рецепты, добавлять чужие рецепты в избранное и подписываться на публикации других авторов. Пользователям сайта также доступен сервис «Список покупок». Он позволит создавать список продуктов, которые нужно купить для приготовления выбранных блюд.
 
 ### Стек технологий:
 * Python 3.10
@@ -17,7 +17,7 @@
 
 1. Клонировать репозиторий и перейти в него в командной строке:
 ```
-git clone git@github.com:svtplv/foodgram-project-react.git
+git clone git@github.com:svtplv/drf-recipe-service .git
 ```
 
 2. Запустить Docker Compose с конфигурацией docker-compose.production.yml:
@@ -83,7 +83,7 @@ GET http://localhost:9000/api/recipes/1/
     "is_favorited": false,
     "is_in_shopping_cart": false,
     "name": "Нечто съедобное (пробовать на свой страх и риск)",
-    "image": "http://foodgram-svt.duckdns.org/media/recipe/images/l-intro-1660422159.jpg",
+    "image": "http://localhost:9000/media/recipe/images/l-intro-1660422159.jpg",
     "text": "Приготовьте как нибудь эти ингредиеты, не забудьте посолить.",
     "cooking_time": 12
 }
@@ -98,7 +98,7 @@ POST http://localhost:9000/api/recipes/{id}/favorite/
 {
   "id": 0,
   "name": "string",
-  "image": "http://foodgram.example.org/media/recipes/images/image.jpeg",
+  "image": "http://localhost:9000/media/recipes/images/image.jpeg",
   "cooking_time": 1
 }
 ```
